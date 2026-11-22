@@ -19,7 +19,7 @@ WIB = timezone(timedelta(hours=7))
 FEEDS = {
     "ANTARA":        "https://www.antaranews.com/rss/politik.xml",
     "ANTARA Nasional": "https://www.antaranews.com/rss/terkini.xml",
-    "detikNews":     "https://news.detik.com/rss",
+    "detikNews":     ["https://news.detik.com/rss", "https://rss.detik.com/index.php/detikcom"],
     "CNN Indonesia": "https://www.cnnindonesia.com/nasional/rss",
     "Tempo":         "https://rss.tempo.co/nasional",
     "Liputan6":      "https://feed.liputan6.com/rss/news",
@@ -42,9 +42,18 @@ tegas sebut ini ini jelang kata ucap warga polisi""".split())
 SPORT = re.compile(r"\bvs\b|live score|liga|\bfc\b|skor|klasemen|jadwal|susunan pemain|premier|champions|nba|\bufc\b|moto ?gp|\bf1\b", re.I)
 
 def get(url, timeout=15):
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read()
+    """Ambil URL (atau daftar URL cadangan). Tiap alamat dicoba 2 kali."""
+    last = None
+    for u in ([url] if isinstance(url, str) else url):
+        for attempt in range(2):
+            try:
+                req = urllib.request.Request(u, headers=UA)
+                with urllib.request.urlopen(req, timeout=timeout) as r:
+                    return r.read()
+            except Exception as e:
+                last = e
+                time.sleep(2)
+    raise last
 
 def strip(s):
     return html.unescape(re.sub(r"<[^>]+>", "", s or "")).strip()
