@@ -19,7 +19,8 @@ WIB = timezone(timedelta(hours=7))
 FEEDS = {
     "ANTARA":        "https://www.antaranews.com/rss/politik.xml",
     "ANTARA Nasional": "https://www.antaranews.com/rss/terkini.xml",
-    "detikNews":     ["https://news.detik.com/rss", "https://rss.detik.com/index.php/detikcom"],
+    # detik memblokir server GitHub, jadi diambil lewat Google News (berita detik tetap masuk, berlabel detikNews).
+    "GNews detik":   "https://news.google.com/rss/search?q=site:news.detik.com+when:6h&hl=id&gl=ID&ceid=ID:id",
     "CNN Indonesia": "https://www.cnnindonesia.com/nasional/rss",
     "Tempo":         "https://rss.tempo.co/nasional",
     "Liputan6":      "https://feed.liputan6.com/rss/news",
