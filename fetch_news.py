@@ -24,10 +24,11 @@ FEEDS = {
     "Tempo":         "https://rss.tempo.co/nasional",
     "Liputan6":      "https://feed.liputan6.com/rss/news",
     "Republika":     "https://www.republika.co.id/rss/nasional",
-    "Suara.com":     "https://www.suara.com/rss/news",
+    "SINDOnews":     "https://www.sindonews.com/feed",
     "Okezone":       "https://sindikasi.okezone.com/index.php/rss/1/RSS2.0",
-    "Kompas":        "https://www.kompas.com/rss",
-    "Tribunnews":    "https://www.tribunnews.com/rss",
+    # Google News menggabungkan banyak media (termasuk Kompas, Tribun, Suara) dalam satu feed.
+    "GNews Politik": "https://news.google.com/rss/search?q=politik+when:6h&hl=id&gl=ID&ceid=ID:id",
+    "GNews Nasional": "https://news.google.com/rss/search?q=DPR+OR+Prabowo+OR+polisi+OR+Kejagung+when:6h&hl=id&gl=ID&ceid=ID:id",
 }
 TRENDS_URL = "https://trends.google.com/trending/rss?geo=ID"
 OUT = Path(__file__).parent / "docs" / "index.html"
@@ -37,6 +38,8 @@ STOP = set("""yang dan di ke dari untuk dengan pada ini itu akan atas oleh juga 
 adalah sebagai karena kata soal usai jadi hingga bakal saat para serta atau bisa kini lagi
 bagi anggota hari sudah belum telah agar dapat lebih tentang antara terkait ungkap beri minta
 tegas sebut ini ini jelang kata ucap warga polisi""".split())
+
+SPORT = re.compile(r"\bvs\b|live score|liga|\bfc\b|skor|klasemen|jadwal|susunan pemain|premier|champions|nba|\bufc\b|moto ?gp|\bf1\b", re.I)
 
 def get(url, timeout=15):
     req = urllib.request.Request(url, headers=UA)
@@ -231,7 +234,10 @@ def run():
     for name, url in FEEDS.items():
         try:
             for title, link, dt in parse_feed(get(url)):
-                items.append({"source": name, "title": title, "link": link, "time": dt})
+                src = name
+                if name.startswith("GNews") and " - " in title:   # judul Google News berakhiran " - NamaMedia"
+                    title, src = title.rsplit(" - ", 1)
+                items.append({"source": src, "title": title, "link": link, "time": dt})
         except Exception as e:
             errors.append(name)
             print(f"[lewati] {name}: {e}", file=sys.stderr)
@@ -241,7 +247,7 @@ def run():
             seen.add(i["title"]); uniq.append(i)
     trends = []
     try:
-        trends = [t for t, _, _ in parse_feed(get(TRENDS_URL))]
+        trends = [t for t, _, _ in parse_feed(get(TRENDS_URL)) if not SPORT.search(t)]
     except Exception as e:
         print(f"[lewati] Google Trends: {e}", file=sys.stderr)
     rising = detect_rising(uniq, trends, now)
